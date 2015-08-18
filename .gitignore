@@ -1,0 +1,18 @@
+# Node
+npm-debug.log
+/node_modules
+
+# Ignore ALL platform stuff - causes compilation chaos
+# Just run cordova platform add XXX for each and build
+platforms
+
+# res
+resources/signing
+
+.idea
+
+# do not publish live config
+www/js/config.live.js
+
+# Mac
+.DS_Store

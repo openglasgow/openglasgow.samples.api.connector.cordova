@@ -1,0 +1,1 @@
+{"CreationDate":"2015-06-24T06:24:22","Description":"A Test Resource.","License":"CREATIVE COMMONS ATTRIBUTION","OpennessRating":2,"Quality":2,"StandardName":"","StandardRating":0,"StandardVersion":"","Title":"API Test Resource Version 2","Type":"csv","Metadata":{"key1":"value1","key2":"value2"}}
