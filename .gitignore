@@ -13,6 +13,7 @@ resources/signing
 
 # do not publish live config
 www/js/config.live.js
+www/js/config.blank.js
 
 # Mac
 .DS_Store

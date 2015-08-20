@@ -7,7 +7,7 @@ var API_NEW_FILE_VERSION_ENDPOINT = "https://api.open.glasgow.gov.uk/Files/Organ
 // get the json file dependencies
 var pathToJsonNewFileRequestBodyExternal = './js/testexternal.js';
 var pathToJsonNewFileRequestBody = './js/test.js';
-var pathToFile = './js/test.csv';
+var pathToFile = 'www/js/test.csv';
 var pathToFileMS = 'www\\js\\test.csv'; // needed due to issue with file path support documented below
 
 var app = {
@@ -48,7 +48,7 @@ var app = {
   },
   // Post an external json file to the platform
   postExternalFile: function() {
-     
+
     // if not auth'd then we need to get a token
     if (!app.auth) {
       app.doAuth(app.postExternalFile);
@@ -96,7 +96,8 @@ var app = {
         // We need to use the MS optimised version as cordova.file.applicationDirectory doesn't seem to be supported
         // and so we need to get a reference to the file in a different way.
 
-      if (WinJS.Utilities.isPhone) {
+      console.log('device.platform:' + device.platform)
+      if (device.platform == 'WinCE' || device.platform == 'Win32NT') {
           // get the file to be posted
           app.makeRequestWithFileMS(app.token, null, json, pathToFile, app.requestComplete);
       } else {
@@ -123,7 +124,7 @@ var app = {
         // We need to use the MS optimised version as cordova.file.applicationDirectory doesn't seem to be supported
         // and so we need to get a reference to the file in a different way.
 
-      if (WinJS.Utilities.isPhone) {
+      if (device.platform == 'WinCE' || device.platform == 'Win32NT') {
           // get the file to be posted
           app.makeRequestWithFileMS(app.token, config.FileId, json, pathToFile, app.requestComplete);
       } else {
@@ -209,7 +210,7 @@ var app = {
     }
 
     // get a reference to the file
-    window.resolveLocalFileSystemURL(cordova.file.applicationDirectory + 'www/' + pathToFile,
+    window.resolveLocalFileSystemURL(resolveApplicationPath(pathToFile),
 
       // resolveLocalFileSystemURL success
       function(fileEntry){
@@ -339,5 +340,15 @@ var app = {
 
   }
 };
+
+// This prepends the appropriate path depending on whether it is iOS or Android
+function resolveApplicationPath(path) {
+  if (device.platform == 'iOS') return cordova.file.applicationDirectory + path;
+  if (device.platform == 'Android') return 'file:///android_asset/' + path;
+
+  // todo - can we do this with windows phone as well?
+
+  return path;
+}
 
 app.initialize();

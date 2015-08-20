@@ -35,6 +35,10 @@
                         {
                             "xml": "<feature name=\"ADALProxy\"><param name=\"ios-package\" value=\"CordovaAdalPlugin\" /></feature>",
                             "count": 1
+                        },
+                        {
+                            "xml": "<feature name=\"Device\"><param name=\"ios-package\" value=\"CDVDevice\" /></feature>",
+                            "count": 1
                         }
                     ]
                 }
@@ -52,6 +56,9 @@
             "PACKAGE_NAME": "uk.gov.glasgow.open.datapublishersample"
         },
         "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "uk.gov.glasgow.open.datapublishersample"
+        },
+        "cordova-plugin-device": {
             "PACKAGE_NAME": "uk.gov.glasgow.open.datapublishersample"
         }
     },
