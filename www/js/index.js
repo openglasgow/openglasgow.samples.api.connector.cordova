@@ -96,7 +96,7 @@ var app = {
         // and so we need to get a reference to the file in a different way.
 
       console.log('device.platform:' + device.platform)
-      if (device.platform == 'WinCE' || device.platform == 'Win32NT') {
+      if (device.platform == 'WinCE' || device.platform == 'Win32NT' || device.platform == 'windows') {
           // get the file to be posted
           app.makeRequestWithFileMS(app.token, null, json, pathToFile, app.requestComplete);
       } else {
@@ -123,7 +123,7 @@ var app = {
         // We need to use the MS optimised version as cordova.file.applicationDirectory doesn't seem to be supported
         // and so we need to get a reference to the file in a different way.
 
-      if (device.platform == 'WinCE' || device.platform == 'Win32NT') {
+      if (device.platform == 'WinCE' || device.platform == 'Win32NT' || device.platform == 'windows') {
           // get the file to be posted
           app.makeRequestWithFileMS(app.token, config.FileId, json, pathToFile, app.requestComplete);
       } else {
@@ -319,6 +319,7 @@ function resolveApplicationPath(path) {
   if (device.platform == 'Android') return 'file:///android_asset/' + path;
 
   // todo - can we do this with windows phone as well?
+  //if (device.platform == 'windows') ...
 
   return path;
 }
