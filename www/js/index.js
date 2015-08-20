@@ -8,7 +8,6 @@ var API_NEW_FILE_VERSION_ENDPOINT = "https://api.open.glasgow.gov.uk/Files/Organ
 var pathToJsonNewFileRequestBodyExternal = './js/testexternal.js';
 var pathToJsonNewFileRequestBody = './js/test.js';
 var pathToFile = 'www/js/test.csv';
-var pathToFileMS = 'www\\js\\test.csv'; // needed due to issue with file path support documented below
 
 var app = {
   // auth details
@@ -219,45 +218,7 @@ var app = {
         fileEntry.file(
           function(file){
 
-            var reader = new FileReader();
-
-            reader.onloadend = function (evt) {
-
-              // get the results into a view for posting
-              var arrayBufferView = new Uint8Array(evt.target.result);
-
-              // get as a file blog for posting
-              var blob = new Blob([arrayBufferView]);
-
-              var data = new FormData();
-              data.append('body', JSON.stringify(json));
-              data.append('content', blob);
-
-              // now make the request
-              $.ajax({
-                  url: uri + '?subscription-key=' + config.SubscriptionKey,
-                  type: 'POST',
-                  contentType: false,
-                  processData: false,
-                  cache: false,
-                  headers: {
-                    'Authorization': 'Bearer ' + app.token
-                  },
-                  data: data,
-                  success: function(response){
-
-                    console.log('Successful ' + JSON.stringify(response));
-                    requestComplete(null, response.RequestId)
-                  },
-                  error: function(response) {
-                    response = JSON.parse(response.responseText);
-                    console.log("Error: ", response);
-                  }
-                }
-              );
-            }
-
-            reader.readAsArrayBuffer(file);
+            app.sendFile(uri, token, fileId, json, file, requestComplete);
           }
         );
       },
@@ -283,63 +244,74 @@ var app = {
       // We need to use this as issue getting the file via the installed app directory using cordova.file
       // Please suggest a pure Cordova alternative.
       var localFolder = Windows.ApplicationModel.Package.current.installedLocation;
-      localFolder.getFileAsync(pathToFileMS).done(function (tfile) {
+      localFolder.getFileAsync(pathToWindowsPath(pathToFile)).done(function (tfile) {
           var file = MSApp.createFileFromStorageFile(tfile);
+          app.sendFile(uri, token, fileId, json, file, requestComplete);
 
-          var reader = new FileReader();
-
-          reader.onloadend = function (evt) {
-
-              // get the results into a view for posting
-              var arrayBufferView = new Uint8Array(evt.target.result);
-
-              // get as a file blog for posting
-              var blob = new Blob([arrayBufferView]);
-
-              var data = new FormData();
-              data.append('body', JSON.stringify(json));
-              data.append('content', blob);
-
-              // now make the request
-              $.ajax({
-                  url: uri + '?subscription-key=' + config.SubscriptionKey,
-                  type: 'POST',
-                  contentType: false,
-                  processData: false,
-                  cache: false,
-                  headers: {
-                      'Authorization': 'Bearer ' + app.token
-                  },
-                  data: data,
-                  success: function (response) {
-
-                      console.log('Successful ' + JSON.stringify(response));
-                      requestComplete(null, response.RequestId)
-                  },
-                  error: function (response) {
-                      response = JSON.parse(response.responseText);
-                      console.log("Error: ", response);
-                  }
-              }
-              );
-          }
-
-          reader.readAsArrayBuffer(file);
       },
       function (e) {
           console.log('Error loading file to upload.')
       });
   },
+    sendFile: function(uri, token, fileId, json, file, requestComplete){
+      var reader = new FileReader();
+
+      reader.onloadend = function (evt) {
+
+        // get the results into a view for posting
+        var arrayBufferView = new Uint8Array(evt.target.result);
+
+        // get as a file blog for posting
+        var blob = new Blob([arrayBufferView]);
+
+        var data = new FormData();
+        data.append('body', JSON.stringify(json));
+        data.append('content', blob);
+
+        // now make the request
+        $.ajax({
+            url: uri + '?subscription-key=' + config.SubscriptionKey,
+            type: 'POST',
+            contentType: false,
+            processData: false,
+            cache: false,
+            headers: {
+              'Authorization': 'Bearer ' + app.token
+            },
+            data: data,
+            success: function (response) {
+
+              console.log('Successful ' + JSON.stringify(response));
+              requestComplete(null, response.RequestId)
+            },
+            error: function (response) {
+              response = JSON.parse(response.responseText);
+              console.log("Error: ", response);
+            }
+          }
+        );
+      }
+
+      reader.readAsArrayBuffer(file);
+    }
+  ,
   requestComplete: function(err, id) {
 
     if (err == null) {
       console.log("Request Identifier is " + id);
+      $('#riq').html('RequestId = ' + id);
     } else {
       console.log('There was an error making the request :' + JSON.stringify(err))
+      $('#riq').html('There was an error making the request :' + JSON.stringify(err));
     }
 
   }
 };
+
+// Translates forward slashes to escaped backslashes for windows
+function pathToWindowsPath(path) {
+  return path.replace('/', '\\');
+}
 
 // This prepends the appropriate path depending on whether it is iOS or Android
 function resolveApplicationPath(path) {
