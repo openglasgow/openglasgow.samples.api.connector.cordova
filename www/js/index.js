@@ -2,10 +2,13 @@
 var API_NEW_FILE_ENDPOINT = "https://api.open.glasgow.gov.uk/Files/Organisation/{0}/Dataset/{1}";
 var API_NEW_FILE_VERSION_ENDPOINT = "https://api.open.glasgow.gov.uk/Files/Organisation/{0}/Dataset/{1}/File/{2}";
 
+
+
 // get the json file dependencies
 var pathToJsonNewFileRequestBodyExternal = './js/testexternal.js';
 var pathToJsonNewFileRequestBody = './js/test.js';
 var pathToFile = './js/test.csv';
+var pathToFileMS = 'www\\js\\test.csv'; // needed due to issue with file path support documented below
 
 var app = {
   // auth details
@@ -13,7 +16,7 @@ var app = {
   token:null,
   // Application Constructor
   initialize: function() {
-
+      
       this.bindEvents();
   },
   // Bind Event Listeners
@@ -36,7 +39,8 @@ var app = {
   // Hook up the buttons for kicking of platform interactions.
   //
   //
-  start: function() {
+  start: function () {
+
     postExternalFile.addEventListener('click', this.postExternalFile, false);
     postExternalFileVersion.addEventListener('click', this.postExternalFileVersion, false);
     postFile.addEventListener('click', this.postFile, false);
@@ -44,7 +48,7 @@ var app = {
   },
   // Post an external json file to the platform
   postExternalFile: function() {
-
+     
     // if not auth'd then we need to get a token
     if (!app.auth) {
       app.doAuth(app.postExternalFile);
@@ -89,8 +93,16 @@ var app = {
     $.getJSON([pathToJsonNewFileRequestBody], function(json) {
       console.log('loaded: ' + JSON.stringify(json));
 
-      // get the file to be posted
-      app.makeRequestWithFile(app.token, null, json, pathToFile, app.requestComplete);
+        // We need to use the MS optimised version as cordova.file.applicationDirectory doesn't seem to be supported
+        // and so we need to get a reference to the file in a different way.
+
+      if (WinJS.Utilities.isPhone) {
+          // get the file to be posted
+          app.makeRequestWithFileMS(app.token, null, json, pathToFile, app.requestComplete);
+      } else {
+          // get the file to be posted
+          app.makeRequestWithFile(app.token, null, json, pathToFile, app.requestComplete);
+      }
     });
 
   },
@@ -108,8 +120,16 @@ var app = {
     $.getJSON([pathToJsonNewFileRequestBody], function(json) {
       console.log('loaded: ' + JSON.stringify(json));
 
-      // get the file to be posted
-      app.makeRequestWithFile(app.token, config.FileId, json, pathToFile, app.requestComplete);
+        // We need to use the MS optimised version as cordova.file.applicationDirectory doesn't seem to be supported
+        // and so we need to get a reference to the file in a different way.
+
+      if (WinJS.Utilities.isPhone) {
+          // get the file to be posted
+          app.makeRequestWithFileMS(app.token, config.FileId, json, pathToFile, app.requestComplete);
+      } else {
+          // get the file to be posted
+          app.makeRequestWithFile(app.token, config.FileId, json, pathToFile, app.requestComplete);
+      }
     });
 
   },
@@ -246,6 +266,68 @@ var app = {
         console.log('Error: ' + err.code);
       }
     );
+  },
+  makeRequestWithFileMS: function (token, fileId, json, file, requestComplete) {
+      var uri;
+
+      if (fileId == null) {
+          uri = API_NEW_FILE_ENDPOINT.format(config.OrgId, config.DatasetId);
+          console.log('Creating a new external file : ' + uri);
+      } else {
+
+          uri = API_NEW_FILE_VERSION_ENDPOINT.format(config.OrgId, config.DatasetId, fileId);
+          console.log('Creating a new external file version : ' + uri);
+      }
+
+      // We need to use this as issue getting the file via the installed app directory using cordova.file
+      // Please suggest a pure Cordova alternative.
+      var localFolder = Windows.ApplicationModel.Package.current.installedLocation;
+      localFolder.getFileAsync(pathToFileMS).done(function (tfile) {
+          var file = MSApp.createFileFromStorageFile(tfile);
+
+          var reader = new FileReader();
+
+          reader.onloadend = function (evt) {
+
+              // get the results into a view for posting
+              var arrayBufferView = new Uint8Array(evt.target.result);
+
+              // get as a file blog for posting
+              var blob = new Blob([arrayBufferView]);
+
+              var data = new FormData();
+              data.append('body', JSON.stringify(json));
+              data.append('content', blob);
+
+              // now make the request
+              $.ajax({
+                  url: uri + '?subscription-key=' + config.SubscriptionKey,
+                  type: 'POST',
+                  contentType: false,
+                  processData: false,
+                  cache: false,
+                  headers: {
+                      'Authorization': 'Bearer ' + app.token
+                  },
+                  data: data,
+                  success: function (response) {
+
+                      console.log('Successful ' + JSON.stringify(response));
+                      requestComplete(null, response.RequestId)
+                  },
+                  error: function (response) {
+                      response = JSON.parse(response.responseText);
+                      console.log("Error: ", response);
+                  }
+              }
+              );
+          }
+
+          reader.readAsArrayBuffer(file);
+      },
+      function (e) {
+          console.log('Error loading file to upload.')
+      });
   },
   requestComplete: function(err, id) {
 
