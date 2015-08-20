@@ -18,6 +18,9 @@
         },
         "cordova-plugin-whitelist": {
             "PACKAGE_NAME": "Open Glasgow Publisher"
+        },
+        "cordova-plugin-device": {
+            "PACKAGE_NAME": "Open Glasgow Publisher"
         }
     },
     "dependent_plugins": {}
